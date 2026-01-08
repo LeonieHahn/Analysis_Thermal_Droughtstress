@@ -410,13 +410,41 @@ write.csv(combined_df,
 
 # view results and compare with original cropped thermal image
 input_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_all_pixels"
-output_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans_percentile1090_clipped"
+output_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_percentile_clipped"
 
-input_files <- dir(input_root, pattern = "\\.tif$", recursive = TRUE, full.names = TRUE)
+target_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans_percentile1090_clipped"
+
+# Copy all Q10_Q90 folders in new folder for comparison
+all_subfolders <- list.dirs(output_root, recursive = FALSE, full.names = TRUE)
+q10_folders <- all_subfolders[grepl("Q10_Q90", all_subfolders)]
+
+# Create new directory
+if(!dir.exists(target_root)) dir.create(target_root, recursive = TRUE)
+
+# Copy all Q10_Q90-folder and rename
+for(folder in q10_folders) {
+  # Rename folder directory, so "_Q10_Q90" is removed
+  new_name <- gsub("_Q10_Q90", "", basename(folder))
+  dest_folder <- file.path(target_root, new_name)
+  
+  cat("Copying", folder, "to", dest_folder, "\n")
+  dir.create(dest_folder, recursive = TRUE, showWarnings = FALSE)
+  
+  #  Copy all files in folder
+  files_to_copy <- list.files(folder, full.names = TRUE)
+  file.copy(files_to_copy, dest_folder, overwrite = TRUE)
+}
+
+cat("Finished copying all Q10_Q90 folders.\n")
+
+
+input_files <- dir(input_root, pattern = "\\.tif$", recursive = TRUE, 
+                   full.names = TRUE)
 
 input_root_kmeans <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
 
 input_files_kmeans <- dir(input_root, pattern = "\\.tif$", recursive = TRUE, full.names = TRUE)
+
 
 
 # compare k-means clustered image with its original version

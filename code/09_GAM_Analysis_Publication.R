@@ -1138,7 +1138,8 @@ predictor_names <- c(
 
 # format model summary
 model_summary_formatted <- model_summary %>%
-  mutate(Predictor_Set = recode(Predictor_Set, !!!predictor_names)) %>%
+  mutate(Predictor_Set = as.character(Predictor_Set)) %>%   
+  mutate(Predictor_Set = dplyr::recode(Predictor_Set, !!!predictor_names)) %>%
   arrange(desc(Deviance_Explained)) %>%
   mutate(
     AIC = round(AIC, 1),
@@ -1151,12 +1152,13 @@ model_summary_formatted <- model_summary %>%
     s_SWC_pvalue = sapply(s_SWC_pvalue, format_pval),
     s_VPD_chi_sq = round(s_VPD_chi_sq, 2),
     s_VPD_pvalue = sapply(s_VPD_pvalue, format_pval)
-  ) 
+  )
+
 
 # format oof_results_all_bal
 oof_results_all_bal_GAM <- oof_results_all_bal %>%
   filter(Model == "GAM") %>%
-  mutate(Predictor_Set = recode(Predictor_Set, !!!predictor_names)) %>%
+  mutate(Predictor_Set = dplyr::recode(Predictor_Set, !!!predictor_names)) %>%
   select(-c(Model, dist0N0, Tree.Species)) %>%
   select(Balanced_Accuracy, everything()) %>%
   arrange(desc(Balanced_Accuracy)) %>%
@@ -1614,7 +1616,7 @@ ggsave("./graphics/results/thresholds/ThrLines+perc_bands_SWCCWSI.png",
 
 # calculate cwsi means and sd betweeen TWDmin classes
 CWSI_summary_table_classes <- data_B %>%
-  mutate(class = recode(class, "nonzero" = "> 0", "zero" = "0")) %>%
+  mutate(class = dplyr::recode(class, "nonzero" = "> 0", "zero" = "0")) %>%
   group_by(Tree.Species, class) %>%
   summarise(
     mean_CWSI = mean(CWSI, na.rm = TRUE),
@@ -1628,7 +1630,7 @@ write.csv(CWSI_summary_table_classes,
           "./data/results/statistical_analysis/CWSI_summary_table_classes.csv")
 
 CWSI_summary_table_classes <- data_B %>%
-  mutate(class = recode(class, "nonzero" = "> 0", "zero" = "0")) %>%
+  mutate(class = dplyr::recode(class, "nonzero" = "> 0", "zero" = "0")) %>%
   group_by(Tree.Species, class) %>%
   summarise(
     mean_CWSI = mean(CWSI, na.rm = TRUE),
@@ -1665,8 +1667,8 @@ cols <- c("   0" = "blue", "> 0" = "red")
 # Boxplot with Wilcoxon-Test ( **** p < 0.0001, ** < 0.01) (Figure 3) to
 # show significant CWSI differences between classes
 p <- ggplot(data_B %>%
-              mutate(class = recode(class, "nonzero" = "> 0"),
-                     class = recode(class, "zero" = "   0")), 
+              mutate(class = dplyr::recode(class, "nonzero" = "> 0"),
+                     class = dplyr::recode(class, "zero" = "   0")), 
             aes(x = Tree.Species, y = CWSI, fill = class)) +
   geom_boxplot(alpha = 0.7, outlier.shape = 21, outlier.size = 2, 
                color = "black") +
@@ -1703,8 +1705,8 @@ ggsave("./graphics/results/CWSI_difs_MinTWD0N0.png",
 
 # Boxplot with Wilcoxon-Test ( **** p < 0.0001, ** < 0.01) for SWC differences
 p <- ggplot(data_B %>%
-              mutate(class = recode(class, "nonzero" = "> 0"),
-                     class = recode(class, "zero" = "   0")), 
+              mutate(class = dplyr::recode(class, "nonzero" = "> 0"),
+                     class = dplyr::recode(class, "zero" = "   0")), 
             aes(x = Tree.Species, y = SWC, fill = class)) +
   geom_boxplot(alpha = 0.7, outlier.shape = 21, outlier.size = 2, 
                color = "black") +
@@ -1741,8 +1743,8 @@ ggsave("./graphics/results/SWC_difs_MinTWD0N0.png",
 
 # Boxplot with Wilcoxon-Test ( **** p < 0.0001, ** < 0.01) for VPD differences
 p <- ggplot(data_B %>%
-              mutate(class = recode(class, "nonzero" = "> 0"),
-                     class = recode(class, "zero" = "   0")), 
+              mutate(class = dplyr::recode(class, "nonzero" = "> 0"),
+                     class = dplyr::recode(class, "zero" = "   0")), 
             aes(x = Tree.Species, y = VPD_kPa, fill = class)) +
   geom_boxplot(alpha = 0.7, outlier.shape = 21, outlier.size = 2, 
                color = "black") +
@@ -1779,7 +1781,7 @@ ggsave("./graphics/results/VPD_difs_MinTWD0N0.png",
 
 # Combined plot with TWDmin class differences for CWSI, SWC and VPD
 data_B_mod <- data_B %>%
-  mutate(class = recode(class,
+  mutate(class = dplyr::recode(class,
                         "nonzero" = "> 0",
                         "zero" = "   0"))
 

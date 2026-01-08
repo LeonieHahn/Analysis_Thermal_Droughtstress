@@ -166,7 +166,7 @@ wp <- pivot_wider(wp[, c(1, 2, 5, 22)], names_from = pd.md,
                   names_prefix = "WP_", values_from = WP_average..MPa.)
 
 # read in TWD from all dendrometers in 10 minute resolution
-TWD_10 <- read_csv("~./data/ZG_phase_rel_logTWD.csv",
+TWD_10 <- read_csv("./data/ZG_phase_rel_logTWD.csv",
                    col_select = -1)
 TWD_10$TIME <- sub(" UTC$", " CEST", TWD_10$TIME)
 # fill in "00:00:00" for the midnight hours, since they are missing
@@ -182,7 +182,7 @@ dendro_trees <- data.frame(Tree.ID = unique(TWD_10$Tree.ID)) %>%
 
 # read in soil moisture of all trees
 swc <- read_csv(
-  ".data/GH_VWC_TDR_means_cleaned+daily_interp_womaxVWC_alltrees.csv",
+  "./data/GH_VWC_TDR_means_cleaned+daily_interp_womaxVWC_alltrees.csv",
   col_select = -1)
 
 swc$Tree.ID <- paste0(swc$Tree.ID, "_", swc$Treatment)

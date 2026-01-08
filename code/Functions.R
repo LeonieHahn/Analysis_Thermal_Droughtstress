@@ -294,67 +294,67 @@ vals_to_rgb <- function(vals, zlim, palette) {
   return(rgb_mat)
 }
 
-# function for visually comparing the k-means clustered thermal images to their 
+# function for visually comparing the k-means clustered thermal images to their
 # original ones
 view_images <- function() {
   col_map <- magma(100)
-  
+
   for(i in seq(from = start_index, to = length(input_files))) {
     orig_path <- input_files[i]
     print(i)
     rel_path <- gsub(paste0("^", input_root, "/?"), "", orig_path)
-    kmeans_path <- file.path(output_root, rel_path)
-    
+    kmeans_path <- file.path(target_root, rel_path)
+
     if (!file.exists(kmeans_path)) {
       message("Missing KMeans-image: ", rel_path)
       next
     }
-    
+
     img_orig <- rast(orig_path)
     img_kmeans <- rast(kmeans_path)
-    
+
     zlim <- range(c(values(img_orig), values(img_kmeans)), na.rm=TRUE)
-    
+
     vals_orig <- values(img_orig)
     vals_kmeans <- values(img_kmeans)
-    
+
     rgb_orig <- vals_to_rgb(vals_orig, zlim, col_map)
     rgb_kmeans <- vals_to_rgb(vals_kmeans, zlim, col_map)
-    
+
     r_orig_rgb <- rast(nlyrs=3, nrow=nrow(img_orig), ncol=ncol(img_orig),
                        extent=ext(img_orig), crs=crs(img_orig))
     r_kmeans_rgb <- rast(nlyrs=3, nrow=nrow(img_kmeans), ncol=ncol(img_kmeans),
                          extent=ext(img_kmeans), crs=crs(img_kmeans))
-    
+
     values(r_orig_rgb[[1]]) <- rgb_orig[,1]
     values(r_orig_rgb[[2]]) <- rgb_orig[,2]
     values(r_orig_rgb[[3]]) <- rgb_orig[,3]
-    
+
     values(r_kmeans_rgb[[1]]) <- rgb_kmeans[,1]
     values(r_kmeans_rgb[[2]]) <- rgb_kmeans[,2]
     values(r_kmeans_rgb[[3]]) <- rgb_kmeans[,3]
-    
+
     layout(matrix(c(1,2,3), 1, 3), widths=c(1,1,0.3))
     par(mar=c(3,3,4,2))
-    
+
     plotRGB(r_orig_rgb, r=1, g=2, b=3, axes=FALSE)
     title(main=paste0("Original Thermal Image\n", basename(orig_path)), line=2)
-    
+
     plotRGB(r_kmeans_rgb, r=1, g=2, b=3, axes=FALSE)
     title(main=paste0("Processed Thermal Image\n", basename(kmeans_path)), line=2)
-    
+
     par(mar=c(3,1,4,4))
     n_col <- length(col_map)
     y_vals <- seq(zlim[1], zlim[2], length.out = n_col + 1)
     z_mat <- matrix(seq(zlim[1], zlim[2], length.out = n_col), nrow = 1, ncol = n_col)
-    
+
     image(x = c(0,1), y = y_vals, z = z_mat,
           col = col_map, axes = FALSE)
     axis(4, at = pretty(y_vals), labels = pretty(y_vals), las = 1, cex.axis = 0.8)
     title("Temperature", line = 2.5)
-    
-    
-    
+
+
+
     readline(prompt="Press [Enter] for next image...")
   }
   message("Completed.")
@@ -382,7 +382,7 @@ view_image_by_name_and_subfolder <- function(subfolder,
   if (!file.exists(kmeans_path)) stop("Missing KMeans-image: ", kmeans_path)
   
   # --- Processed Thermal ---
-  proc_path <- file.path(output_root, rel_path)
+  proc_path <- file.path(target_root, rel_path)
   if (!file.exists(proc_path)) stop("Missing processed image: ", proc_path)
   
   # load raster
