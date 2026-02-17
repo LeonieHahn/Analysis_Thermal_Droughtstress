@@ -42,8 +42,12 @@ library(zoo)
 source("./Code/Functions.R")
 
 irrig_CWSI <- read_csv("./data/results/Irrig_CWSI.csv")
+# irrig_CWSI <- read_csv("./data/results/Irrig_CWSI_VPD_uncor.csv") # version with uncorrected VPD, airtemp, RH
+# irrig_CWSI <- read_csv("./data/results/Irrig_CWSI_VPD_median_cor.csv") # version with Tmedian corrected VPD, airtemp, RH
 
 all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min.csv")
+# all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min_VPD_uncor.csv")
+# all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min_VPD_median_cor.csv")
 
 # create overview plot (S 2) with CWSI, ecophysiological, and environmental
 # variables during the course of the experiment per treatment and tree species
@@ -324,6 +328,18 @@ ggsave("./graphics/results/Dataoverview_Treatment_Species.png",
        units = "cm",    
        dpi = 300)
 
+# ggsave("./graphics/results/Dataoverview_Treatment_Species_VPD_uncor.png",
+#        width = 21,
+#        height = 29,
+#        units = "cm",
+#        dpi = 300)
+# 
+# ggsave("./graphics/results/Dataoverview_Treatment_Species_VPD_median_cor.png",
+#        width = 21,      
+#        height = 29,     
+#        units = "cm",    
+#        dpi = 300)
+
 ggsave("./graphics/results/Dataoverview_Treatment_Species2.png",
        width = 25,      
        height = 29,     
@@ -388,6 +404,14 @@ write.csv(correlation_species_df,
           "./data/results/statistical_analysis/Correlations_BDE.csv",
           row.names = FALSE)
 
+# write.csv(correlation_species_df, 
+#           "./data/results/statistical_analysis_VPD_uncor/Correlations_BDE_VPD_uncor.csv",
+#           row.names = FALSE)
+# 
+# write.csv(correlation_species_df,
+#           "./data/results/statistical_analysis_VPD_median_cor/Correlations_BDE_VPD_median_cor.csv",
+#           row.names = FALSE)
+
 formatted_df <- correlation_species_df %>%
   mutate(
     correlation = sprintf("%.2f", correlation),
@@ -404,6 +428,14 @@ correlation_species_df_wide <- formatted_df %>%
 write.csv(correlation_species_df_wide, 
           "./data/results/statistical_analysis/Correlations_BDE_formatted.csv",
           row.names = FALSE)
+
+# write.csv(correlation_species_df_wide, 
+#           "./data/results/statistical_analysis_VPD_uncor/Correlations_BDE_formatted_VPD_uncor.csv",
+#           row.names = FALSE)
+# 
+# write.csv(correlation_species_df_wide,
+#           "./data/results/statistical_analysis_VPD_median_cor/Correlations_BDE_formatted_VPD_median_cor.csv",
+#           row.names = FALSE)
 
 corplot_data <- irrig_CWSI %>%
   filter(!is.na(CWSI)) %>%
@@ -584,6 +616,10 @@ ggplot(
 
 ggsave("./graphics/results/Corr_Plot_CWSI_all_trees_BED_env_eco2.png",  
        width = 14, height = 6, dpi = 300)
+# ggsave("./graphics/results/Corr_Plot_CWSI_all_trees_BED_env_eco2_VPD_uncor.png",  
+#        width = 14, height = 6, dpi = 300)
+# ggsave("./graphics/results/Corr_Plot_CWSI_all_trees_BED_env_eco2_VPD_median_cor.png",
+#        width = 14, height = 6, dpi = 300)
 
 
 # Analyse dendrometer trees
@@ -609,7 +645,7 @@ vars_to_plot <- c("SWC", "VPD_kPa", "Min_rel_TWD", "CWSI", "rel_TWD_log")
 tree_species <- unique(data_B$Tree.Species)
 
 for(var in vars_to_plot){
-  p <- ggplot(data_B, aes_string(x = var)) +
+  p <- ggplot(data_B, aes(x = .data[[var]])) +
     geom_histogram(bins = 60, fill = "skyblue", color = "black") +
     theme_minimal() +
     facet_wrap(~ Tree.Species, scales = "free") +  
@@ -648,9 +684,10 @@ for(tree_spec in tree_species){
     theme_bw()
   print(p)
   
-    ggsave(filename = paste0("./graphics/results/correlations/corrplot_", 
+    ggsave(filename = paste0("./graphics/results/correlations/corrplot_",
                            tree_spec, ".png"),
          plot = p, width = 8, height = 8)
+    
 }
 
 
@@ -694,7 +731,7 @@ for(i in c(2:5)){
 par(mfrow = c(1,1))
 
 # correlations across all tree species
-ggpairs(data_B %>%
+p <- ggpairs(data_B %>%
           select(-c("Tree.Species", "class")) %>%
           rename(
             TWDmin = Min_rel_TWD,
@@ -710,8 +747,11 @@ ggpairs(data_B %>%
         diag = list(continuous = "barDiag")) +
   theme_bw()
 
+print(p)
+
 ggsave(filename = "./graphics/results/correlations/corrplot_BED_overall.png",
        width = 10, height = 10)
+
 
 # GAM Analysis
 # Create predictor sets
@@ -740,6 +780,16 @@ dir.create("./graphics/Confusion_Matrix/plots_cm_bal",
            showWarnings = FALSE, recursive = TRUE)
 dir.create("./graphics/Confusion_Matrix/plots_cm_mean_bal", 
            showWarnings = FALSE, recursive = TRUE)
+
+# dir.create("./graphics/Confusion_Matrix_VPD_uncor/plots_cm_bal", 
+#            showWarnings = FALSE, recursive = TRUE)
+# dir.create("./graphics/Confusion_Matrix_VPD_uncor/plots_cm_mean_bal", 
+#            showWarnings = FALSE, recursive = TRUE)
+# 
+# dir.create("./graphics/Confusion_Matrix_VPD_median_cor/plots_cm_bal", 
+#            showWarnings = FALSE, recursive = TRUE)
+# dir.create("./graphics/Confusion_Matrix_VPD_median_cor/plots_cm_mean_bal", 
+#            showWarnings = FALSE, recursive = TRUE)
 
 
 # initialise results lists and dataframes
@@ -874,10 +924,11 @@ for (pred_set_name in names(predictor_sets)) {
     theme_minimal(base_size = 14)
   
   ggsave(
-    filename = paste0("./graphics/Confusion_Matrix/plots_cm_bal/cm_oof_", 
+    filename = paste0("./graphics/Confusion_Matrix/plots_cm_bal/cm_oof_",
                       pred_set_name, ".png"),
     plot = cm_plot, width = 10, height = 6, dpi = 300
   )
+  
   
   # Plot confusion matrix mean over folds
   all_levels <- levels(data_B$class)
@@ -910,11 +961,11 @@ for (pred_set_name in names(predictor_sets)) {
     theme_minimal(base_size = 14)
   
   ggsave(
-    filename = paste0("./graphics/Confusion_Matrix/plots_cm_mean_bal/cm_mean_", 
+    filename = paste0("./graphics/Confusion_Matrix/plots_cm_mean_bal/cm_mean_",
                       pred_set_name, ".png"),
     plot = cm_plot_mean, width = 10, height = 6, dpi = 300
   )
-  
+
   cm_mean_all_bal[[pred_set_name]] <- list(GAM = cm_mean_df)
 }
 
@@ -931,8 +982,20 @@ cv_summary_df_long_bal <- lapply(cv_results_all_bal, function(mod_list) {
 write.csv(cv_summary_df_long_bal, 
           "./data/results/statistical_analysis/Mean+SD_CV_results_GAM.csv")
 
+# write.csv(cv_summary_df_long_bal,
+#           "./data/results/statistical_analysis_VPD_uncor/Mean+SD_CV_results_GAM_VPD_uncor.csv")
+# 
+# write.csv(cv_summary_df_long_bal,
+#           "./data/results/statistical_analysis_VPD_median_cor/Mean+SD_CV_results_GAM_VPD_median_cor.csv")
+
 write.csv(oof_results_all_bal, 
           "./data/results/statistical_analysis/OOF_CV_results_GAM.csv")
+
+# write.csv(oof_results_all_bal,
+#           "./data/results/statistical_analysis_VPD_uncor/OOF_CV_results_GAM_VPD_uncor.csv")
+# 
+# write.csv(oof_results_all_bal,
+#           "./data/results/statistical_analysis_VPD_median_cor/OOF_CV_results_GAM_VPD_median_cor.csv")
 
 
 # Apply GAMs on whole dataset and diagnose with DHARMa 
@@ -941,6 +1004,15 @@ write.csv(oof_results_all_bal,
 dir.create("./graphics/DHARMa_Plots", showWarnings = FALSE, recursive = TRUE)
 dir.create("./data/results/statistical_analysis", showWarnings = FALSE, 
            recursive = TRUE)
+
+# dir.create("./graphics/DHARMa_Plots_VPD_uncor", showWarnings = FALSE, recursive = TRUE)
+# dir.create("./data/results/statistical_analysis_VPD_uncor", showWarnings = FALSE, 
+#            recursive = TRUE)
+# 
+# 
+# dir.create("./graphics/DHARMa_Plots_VPD_median_cor", showWarnings = FALSE, recursive = TRUE)
+# dir.create("./data/results/statistical_analysis_VPD_median_cor", showWarnings = FALSE, 
+#            recursive = TRUE)
 
 # Create dataframes for results
 dharma_summary <- data.frame()
@@ -968,9 +1040,17 @@ for (pred_set_name in names(predictor_sets)) {
   sim_res <- simulateResiduals(fittedModel = gam_model, plot = FALSE)
   
   # Combined DHARMa diagnosis plot
-  png(filename = paste0("./graphics/DHARMa_Plots/DHARMa_Disp_ZI_", 
+  png(filename = paste0("./graphics/DHARMa_Plots/DHARMa_Disp_ZI_",
                         pred_set_name, ".png"),
       width = 2400, height = 1600, res = 200)
+
+  # png(filename = paste0("./graphics/DHARMa_Plots_VPD_uncor/DHARMa_Disp_ZI_",
+  #                       pred_set_name, ".png"),
+  #     width = 2400, height = 1600, res = 200)
+  # 
+  # png(filename = paste0("./graphics/DHARMa_Plots_VPD_median_cor/DHARMa_Disp_ZI_",
+  #                       pred_set_name, ".png"),
+  #     width = 2400, height = 1600, res = 200)
   
   par(mfrow = c(1, 2), mar = c(4,4,3,1)) 
   
@@ -982,13 +1062,13 @@ for (pred_set_name in names(predictor_sets)) {
   
   dev.off()
   
-  png(filename = paste0("./graphics/DHARMa_Plots/DHARMa_plot_", 
+  png(filename = paste0("./graphics/DHARMa_Plots/DHARMa_plot_",
                         pred_set_name, ".png"),
       width = 2400, height = 1600, res = 200)
-  
-  # DHARMa-Standardplots (Residuals vs Predicted + QQ)
+
+  # # DHARMa-Standardplots (Residuals vs Predicted + QQ)
   plot(sim_res)
-  
+
   dev.off()
   
   ks <- testUniformity(sim_res)
@@ -1010,11 +1090,11 @@ for (pred_set_name in names(predictor_sets)) {
   )
   
   # Plot effects
-  png(filename = paste0("./graphics/DHARMa_Plots/Effects_", 
+  png(filename = paste0("./graphics/DHARMa_Plots/Effects_",
                         pred_set_name, ".png"),
       width = 1800, height = 1000, res = 200)
   par(mfrow = c(ceiling(length(features)/2), 2))
-  plot(gam_model, pages = 1, shade = TRUE, seWithMean = TRUE, 
+  plot(gam_model, pages = 1, shade = TRUE, seWithMean = TRUE,
        main = pred_set_name)
   dev.off()
   
@@ -1105,9 +1185,10 @@ for (pred_set_name in names(predictor_sets)) {
   
   
   # Save model
-  saveRDS(gam_model, 
-          file = paste0("./data/results/statistical_analysis/GAM_Model_", 
+  saveRDS(gam_model,
+          file = paste0("./data/results/statistical_analysis/GAM_Model_",
                         pred_set_name, ".rds"))
+  
 }
 
 
@@ -1117,12 +1198,37 @@ write.csv(dharma_summary,
           row.names = FALSE)
 
 write.csv(model_summary,
-          "./data/results/statistical_analysis/DHARMa_GAM_model_summaries.csv", 
+          "./data/results/statistical_analysis/DHARMa_GAM_model_summaries.csv",
           row.names = FALSE)
 
 write.csv(oof_results_all_bal,
-          "./data/results/statistical_analysis/DHARMa_GAM_oof_cv_results.csv", 
+          "./data/results/statistical_analysis/DHARMa_GAM_oof_cv_results.csv",
           row.names = FALSE)
+
+
+# write.csv(dharma_summary,
+#           "./data/results/statistical_analysis_VPD_uncor/DHARMa_Tests_GAM.csv",
+#           row.names = FALSE)
+# 
+# write.csv(model_summary,
+#           "./data/results/statistical_analysis_VPD_uncor/DHARMa_GAM_model_summaries.csv",
+#           row.names = FALSE)
+# 
+# write.csv(oof_results_all_bal,
+#           "./data/results/statistical_analysis_VPD_uncor/DHARMa_GAM_oof_cv_results.csv",
+#           row.names = FALSE)
+# 
+# write.csv(dharma_summary,
+#           "./data/results/statistical_analysis_VPD_median_cor/DHARMa_Tests_GAM.csv",
+#           row.names = FALSE)
+# 
+# write.csv(model_summary,
+#           "./data/results/statistical_analysis_VPD_median_cor/DHARMa_GAM_model_summaries.csv",
+#           row.names = FALSE)
+# 
+# write.csv(oof_results_all_bal,
+#           "./data/results/statistical_analysis_VPD_median_cor/DHARMa_GAM_oof_cv_results.csv",
+#           row.names = FALSE)
 
 
 # Change predictor set names
@@ -1192,6 +1298,21 @@ write.csv(GAM_results_combined,
 write.csv(GAM_wide_df, 
           "./data/results/statistical_analysis/GAM_results_wide.csv", 
           row.names = FALSE)
+
+
+# write.csv(GAM_results_combined,
+#           "./data/results/statistical_analysis_VPD_uncor/GAM_results_combined.csv",
+#           row.names = FALSE)
+# write.csv(GAM_wide_df,
+#           "./data/results/statistical_analysis_VPD_uncor/GAM_results_wide.csv",
+#           row.names = FALSE)
+# 
+# write.csv(GAM_results_combined,
+#           "./data/results/statistical_analysis_VPD_median_cor/GAM_results_combined.csv",
+#           row.names = FALSE)
+# write.csv(GAM_wide_df,
+#           "./data/results/statistical_analysis_VPD_median_cor/GAM_results_wide.csv",
+#           row.names = FALSE)
 
 
 # Calculate thresholds for P > 50% that TWDmin > 0 using GAM-CWSI
@@ -1357,6 +1478,8 @@ print(gg_combined)
 
 ggsave("./graphics/results/thresholds/CWSI_irrig_thres_GAM_all_species.png",
        plot = gg_combined, width = 12, height = 7, dpi = 300)
+
+
 
 # Calculate thresholds for P > 50% that TWDmin > 0 using GAM-SWC
 
@@ -1568,7 +1691,13 @@ ggplot(contour_lines, aes(x = VPD_kPa, y = SWC, color = Tree.Species)) +
 ggsave("./graphics/results/thresholds/ThrLines_SWCVPD_CWSI_values_species_Linetype.png",
        width = 10, height = 6, dpi = 300)
 
-# Calculate thresholds for P > 50% that TWDmin > 0 using GAM-CWSI+SWC+VPD
+# ggsave("./graphics/results/thresholds/ThrLines_SWCVPD_CWSI_values_species_Linetype_VPD_uncor.png",
+#        width = 10, height = 6, dpi = 300)
+# 
+# ggsave("./graphics/results/thresholds/ThrLines_SWCVPD_CWSI_values_species_Linetype_VPD_median_cor.png",
+#        width = 10, height = 6, dpi = 300)
+
+# Calculate thresholds for P > 50% that TWDmin > 0 using GAM-CWSI+SWC
 mod <- gam_list[[2]]
 
 # Create grid for heatmap 
@@ -1778,6 +1907,12 @@ print(p)
 
 ggsave("./graphics/results/VPD_difs_MinTWD0N0.png",
        plot = p, width = 10, height = 5, dpi = 300)
+
+# ggsave("./graphics/results/VPD_difs_MinTWD0N0_VPD_uncor.png",
+#        plot = p, width = 10, height = 5, dpi = 300)
+# 
+# ggsave("./graphics/results/VPD_difs_MinTWD0N0_VPD_median_cor.png",
+#        plot = p, width = 10, height = 5, dpi = 300)
 
 # Combined plot with TWDmin class differences for CWSI, SWC and VPD
 data_B_mod <- data_B %>%

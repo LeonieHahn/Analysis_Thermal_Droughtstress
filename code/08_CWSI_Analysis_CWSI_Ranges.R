@@ -139,17 +139,35 @@ CWSI_df <- CWSI_df%>%
 
 # read in climate data for adding RH, Temp and VPD at thermal measurement
 climate <- read_excel(
-  "./data/GH2023_T-Sensor-comparison.xlsx",
+  "./data/GH2023_Climate_combined.xlsx",
   sheet = 1) 
 
-climate <- climate[, c(1, 17, 21, 26)]
+climate <- climate[, c(1, 24, 21, 26)] # version with Tair_min corrected VPD+RH
+
+# climate <- climate[, c(1, 17, 16, 18)] # version with uncorrected VPD
+
+# climate <- climate[, c(1, 36, 33, 38)] # version with Tair_median corrected VPD+RH
+
 climate$DateTime <- force_tz(climate$DateTime, tzone = "Europe/Berlin")
 
 colnames(climate) <- c("DateTime", "RH", "Air_temp", "VPD_kPa")
 
+# calculate daily mean, min and max VPD
+climate <- climate %>%
+  mutate(DateTime = force_tz(DateTime, tzone = "Europe/Berlin")) %>%
+  mutate(Date = as_date(DateTime)) %>%
+  group_by(Date) %>%
+  mutate(
+    VPD_adj_dailyavg_kPa = mean(VPD_kPa, na.rm = TRUE),
+    VPD_adj_dailymax_kPa = max(VPD_kPa, na.rm = TRUE),
+    VPD_adj_dailymin_kPa = min(VPD_kPa, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  select(-Date)
+
 # read in irrigation demand, twd, environmental data
 irrig <- read_csv("./data/Irrigation_thres_GH_2023.csv",
-                  col_select = -1)
+                  col_select = -c(1, 6, 7, 8))
 
 # read in min. and max. TWD and WP data (dendrometer trees)
 TWD_WP <- read_csv("./data/TWD_WP_combined.csv",
@@ -261,6 +279,11 @@ sum(duplicated(combined_df))
 write.csv(combined_df, "./data/results/Env_Eco_CWSI_combined_10min.csv",
           row.names = FALSE)
 
+# write.csv(combined_df, "./data/results/Env_Eco_CWSI_combined_10min_VPD_uncor.csv",
+#           row.names = FALSE)
+# 
+# write.csv(combined_df, "./data/results/Env_Eco_CWSI_combined_10min_VPD_median_cor.csv",
+#           row.names = FALSE)
 
 # combine CWSI_df and TWD info to calculate the time differences between
 # CWSI aqcuisition and min., max. and rel. TWD
@@ -402,12 +425,18 @@ irrig_CWSI_allranges <- irrig_CWSI %>%
 write.csv(irrig_CWSI_allranges, "./data/results/Irrig_CWSI_allranges.csv", 
           row.names = FALSE)
 
+# write.csv(irrig_CWSI_allranges, "./data/results/Irrig_CWSI_allranges_VPD_uncor.csv",
+#           row.names = FALSE)
+# 
+# write.csv(irrig_CWSI_allranges, "./data/results/Irrig_CWSI_allranges_VPD_median_cor.csv",
+#           row.names = FALSE)
+
 
 # compare CWSI values when using different percentiles for outlier thresholding
 
 ggplot(irrig_CWSI_allranges, 
        aes(x = Date, y = CWSI, color = RangeType, group = RangeType)) +
-  stat_summary(fun = mean, geom = "line", size = 1) +
+  stat_summary(fun = mean, geom = "line", linewidth = 1) +
   stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) +
   theme_minimal() +
   facet_grid(Tree.Species ~ Treatment) +
@@ -435,7 +464,7 @@ ggplot(cwsi_diffs_long %>%
                  Date_label = factor(Date_label, 
                                      levels = unique(format(sort(unique(Date)), 
                                                             "%d.%m."))),
-           RangeType = recode(RangeType,
+           RangeType = dplyr::recode(RangeType,
                                    "Q1_Q99"    = "1.–99.% Quantile",
                                    "Q5_Q95"    = "5.–95.% Quantile",
                                    "Q10_Q90"   = "10.–90.% Quantile",
@@ -484,6 +513,9 @@ irrig_CWSI <- irrig_CWSI_allranges %>%
 irrig_CWSI$RangeType <- NULL
 
 write.csv(irrig_CWSI, "./data/results/Irrig_CWSI.csv", row.names = FALSE)
+# write.csv(irrig_CWSI, "./data/results/Irrig_CWSI_VPD_uncor.csv", row.names = FALSE)
+# write.csv(irrig_CWSI, "./data/results/Irrig_CWSI_VPD_median_cor.csv", row.names = FALSE)
+
 
 # create overview plots
 # median leaf temperatures all trees
