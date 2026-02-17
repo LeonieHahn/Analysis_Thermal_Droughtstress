@@ -263,6 +263,21 @@ combined_df <- left_join(combined_df, CWSI_df_joinsel[, c(1, 4, 15)],
 
 # exclude CWSI values below 0 and above 1 since they are unrealistic ->
 # measurement errors
+
+# count how often CWSI values are below 0 or above 1
+count_CWSI_unreal <-  irrig_CWSI %>%
+  filter(CWSI < 0 | CWSI > 1) %>%
+  filter(RangeType == "Q10_Q90")
+
+# count how many CWSI values there are in total
+count_CWSI <-  irrig_CWSI %>%
+  filter(RangeType == "Q10_Q90")
+
+# cout per tree species
+count_CWSI_unreal_spec <- count_CWSI_unreal %>%
+  group_by(Tree.Species) %>%
+  count()
+
 irrig_CWSI <- irrig_CWSI %>%
   mutate(CWSI = ifelse(CWSI < 0 | CWSI > 1, "NA", CWSI)) %>%
   mutate(CWSI = as.numeric(CWSI))
