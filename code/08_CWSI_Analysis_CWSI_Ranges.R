@@ -3,6 +3,11 @@
 # - visualize CWSI per tree species, treatment and date
 # - combine CWSI values with environmental and ecophysiological data
 # - calculate time differences between CWSI acquisition, min., max. and rel. TWD
+# - create overview with timestamps of thermal image recordings and 
+# - get earliest and latest image time per date
+# - add solar noon per date
+# - explore how CWSI is affected by image acquisition time / 
+#   distance tosolar noon 
 
 
 library(dplyr)
@@ -14,6 +19,9 @@ library(purrr)
 library(ggplot2)
 library(lubridate)
 library(scales)
+library(suncalc)
+library(ppcor)
+
 
 segment_info <- read_csv("D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/TreeSpecies_Dates_TreeIDs.csv")
 segment_info$Date <- as.Date(as.character(segment_info$Date), format = "%Y%m%d")
@@ -833,3 +841,202 @@ ggsave("./graphics/results/Overview_CWSI_DendroTrees_BED.png",
        units = "cm",
        dpi = 600)    
 
+
+# create overview with timestamps of thermal image recordings and 
+
+temp_files <- lapply(list.files(
+  "./data/Thermal/tempvalue_tables/", full.names = TRUE), 
+  function(f) read_csv(f, col_select = -1))
+
+temp_df <- Reduce(rbind, temp_files)
+temp_df <- temp_df %>%
+  # exclude Abies alba as it is not used in this study
+  filter(Tree.Species != "Abies Alba") %>%
+  mutate(
+    date_str = str_extract(imgname, "\\d{4}-\\d{2}-\\d{2}"),
+    time_str = str_extract(imgname, "(?<=_)\\d{2}-\\d{2}-\\d{2}") %>%
+      str_replace_all("-", ":"),
+    datetime = ymd_hms(paste(date_str, time_str), tz = "Europe/Berlin"),
+    Time = format(datetime, "%H:%M:%S")
+  )
+
+time_range_per_day <- temp_df %>%
+  group_by(Date) %>%
+  summarise(
+    earliest_time = format(min(datetime, na.rm = TRUE), "%H:%M:%S"),
+    latest_time   = format(max(datetime, na.rm = TRUE), "%H:%M:%S"),
+    .groups = "drop"
+  )
+
+# get earliest and latest image time per date
+time_range_per_day <- temp_df %>%
+  group_by(Date) %>%
+  summarise(
+    earliest_time = min(Time, na.rm = TRUE),
+    latest_time   = max(Time, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# add solar noon per date
+solar_noon_df <- getSunlightTimes(
+  date = time_range_per_day$Date,
+  lat  = 48.399400,    
+  lon  = 11.717798,    
+  tz   = "Europe/Berlin",
+  keep = "solarNoon"
+)
+
+time_range_with_noon <- time_range_per_day %>%
+  bind_cols(solar_noon_df %>% dplyr::select(solarNoon)) %>%
+  mutate(
+    solarNoonTime = format(solarNoon, "%H:%M:%S") 
+  )
+
+# calculate time differences between solar noon and earliest and lates image
+time_range_with_noon <- time_range_with_noon %>%
+  mutate(
+    earliest_POSIX = as.POSIXct(paste(Date, earliest_time), 
+                                format = "%Y-%m-%d %H:%M:%S", 
+                                tz = "Europe/Berlin"),
+    latest_POSIX   = as.POSIXct(paste(Date, latest_time),   
+                                format = "%Y-%m-%d %H:%M:%S", 
+                                tz = "Europe/Berlin"),
+    solarNoon_POSIX = solarNoon,  
+    Diff_Earliest  = as.numeric(difftime(solarNoon_POSIX, 
+                                         earliest_POSIX, units = "mins")),
+    Diff_Latest    = as.numeric(difftime(latest_POSIX, 
+                                         solarNoon_POSIX, units = "mins")),
+    Diff_Earliest_h  = as.numeric(difftime(solarNoon_POSIX, 
+                                           earliest_POSIX, units = "hours")),
+    Diff_Latest_h    = as.numeric(difftime(latest_POSIX, 
+                                           solarNoon_POSIX, units = "hours"))
+  ) %>%
+  dplyr::select(Date, earliest_time, latest_time, 
+         solarNoonTime, Diff_Earliest, Diff_Latest, 
+         Diff_Earliest_h, Diff_Latest_h) 
+
+
+ggplot(temp_df %>%
+         filter(Position  %in% 
+                  c("Tree_Shade", "Green_Dry_Shade", "Green_Wet_Shade",
+                    "Tree_Sun", "Green_Dry_Sun", "Green_Wet_Sun",
+                    "Geen_Dry_Shade", "GReen_Dry_Shade", "Green_wet_Sun"))) +
+  geom_point(aes(x =as.POSIXct(paste(Time), 
+                               format = "%H:%M:%S", 
+                               tz = "Europe/Berlin"), 
+                 y = Temperature, color = Treatment)) +
+  facet_grid(Position ~ Tree.Species) +
+  xlab("Time") +
+  theme_bw()
+
+# create table with image acquisition times and time difference to solar noon
+imagetimes_solarnoon <- left_join(temp_df, solar_noon_df, 
+                                  by = c("Date" = "date"))
+imagetimes_solarnoon <- imagetimes_solarnoon %>%
+  mutate(TimeDiff_SolarNoon_h  = as.numeric(
+                                difftime(solarNoon, datetime, 
+                                         units = "hours")),
+         Tree.ID = paste0(Tree.ID, "_", Treatment)) %>%
+  dplyr::select("Date", "Tree.ID", "Treatment", "Time", "solarNoon",
+         "TimeDiff_SolarNoon_h") %>%
+  unique()
+
+# compare how CWSI is affected by image acquisition time and time difference to
+# solar noon
+cwsi_solarnoon <- left_join(irrig_CWSI, imagetimes_solarnoon,
+                            by = c("Tree.ID", "Treatment", "Date"))
+
+
+# calculate R² for the relationship CWSI and TimeDiff_SolarNoon_min
+r2_df <- cwsi_solarnoon %>%
+ # group_by(Tree.Species) %>%
+  summarise(
+    R2 = summary(lm(CWSI ~ TimeDiff_SolarNoon_h))$r.squared,
+    .groups = "drop"
+  ) %>%
+  mutate(R2_label = paste0("R² = ", round(R2, 2)))
+
+
+# Calculate partial correlation between CWSI and TimeDiff_SolarNoon_min
+# without the effect of VPD_kPa
+df_test <- cwsi_solarnoon %>%
+  dplyr::select(CWSI, TimeDiff_SolarNoon_h, VPD_kPa) %>%
+  na.omit()
+
+pcor_res <- pcor.test(
+  df_test$CWSI,
+  df_test$TimeDiff_SolarNoon_h,
+  df_test$VPD_kPa,
+  method = "pearson"
+)
+
+pcor_df <- tibble(
+  pcor_r = pcor_res$estimate,
+  p_value = pcor_res$p.value,
+  label = paste0(
+    "partial r = ", round(pcor_res$estimate, 2),
+    ifelse(pcor_res$p.value < 0.001, " ***",
+           ifelse(pcor_res$p.value < 0.01, " **",
+                  ifelse(pcor_res$p.value < 0.05, " *", "")))
+  )
+)
+
+pcor_df
+
+
+# Plot with R² and partial correlation results
+ggplot(cwsi_solarnoon, aes(x = TimeDiff_SolarNoon_h, y = CWSI, 
+                           color = Tree.Species)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(aes(group = 1), method = "lm", se = TRUE, color = "black") +
+ # geom_smooth(aes(color = Tree.Species), method = "lm", se = FALSE) +
+  scale_color_manual(values = c(
+    "F. sylvatica" = "#298c8c",
+    "P. menziesii" = "orange",
+    "Q. robur" = "darkmagenta"
+  )) +
+  
+  # R² label 
+  geom_text(
+    data = r2_df,
+    aes(
+      x = 4,
+      y = max(cwsi_solarnoon$CWSI, na.rm = TRUE),
+      label = R2_label
+    ),
+    inherit.aes = FALSE,
+    hjust = 1, vjust = 1,
+    color = "black"
+  ) +
+  
+  # Partial correlation label
+  geom_text(
+    data = pcor_df,
+    aes(
+      x = 4,
+      y = max(cwsi_solarnoon$CWSI, na.rm = TRUE) - 0.05, 
+      label = label
+    ),
+    inherit.aes = FALSE,
+    hjust = 1, vjust = 1,
+    color = "black"
+  ) +
+  
+  labs(
+    x = "Time difference from solar noon [hours]",
+    y = "CWSI",
+    color = "Tree Species"
+  ) +
+  xlim(-3.3, 4) +
+  theme_minimal()
+
+ggsave("./graphics/results/correlations/correlation_CWSI_Time_SolarNoon.png")
+
+# calculate how many cwsi measurements were taken between +- 2 hours around 
+# solar noon
+cwsi_near_noon <- cwsi_solarnoon %>%
+  filter(TimeDiff_SolarNoon_h >= -2 & TimeDiff_SolarNoon_h <= 2)
+
+n_values <- nrow(cwsi_near_noon)
+
+perc_cwsi_near_noon <- n_values/nrow(cwsi_solarnoon)

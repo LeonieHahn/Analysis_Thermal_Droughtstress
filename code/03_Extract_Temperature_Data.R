@@ -1,12 +1,15 @@
 # Create temperature rasters from the raw values for every image and
 # extract temperature values from the selected points
 
+
 library(terra)
 library(viridis)
 library(Thermimage)
 library(fields)
 library(dplyr)
 library(readr)
+library(stringr)
+
 
 source("./Code/Functions.R")
 
@@ -78,3 +81,5 @@ for (image_folder in image_folderlist) {
 # table entries are empty for the empty shapefiles where do not have data,
 # but the temprasters and rawrasters where created and contain some wrong data,
 # thus delete them manually
+
+
