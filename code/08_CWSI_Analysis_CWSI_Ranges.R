@@ -967,7 +967,7 @@ pcor_res <- pcor.test(
   df_test$CWSI,
   df_test$TimeDiff_SolarNoon_h,
   df_test$VPD_kPa,
-  method = "pearson"
+  method = "spearman"
 )
 
 pcor_df <- tibble(
@@ -1025,7 +1025,7 @@ ggplot(cwsi_solarnoon, aes(x = TimeDiff_SolarNoon_h, y = CWSI,
   labs(
     x = "Time difference from solar noon [hours]",
     y = "CWSI",
-    color = "Tree Species"
+    color = "Tree species"
   ) +
   xlim(-3.3, 4) +
   theme_minimal()
