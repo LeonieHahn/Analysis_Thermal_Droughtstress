@@ -350,7 +350,7 @@ ggsave("./graphics/results/Dataoverview_Treatment_Species2.png",
 # Correlation analysis
 
 vars <- irrig_CWSI %>%
-  select(Mean_VPD_kPa, Min_VPD_kPa, Max_VPD_kPa, VPD_kPa, RH, Air_temp,
+  dplyr::select(Mean_VPD_kPa, Min_VPD_kPa, Max_VPD_kPa, VPD_kPa, RH, Air_temp,
          SWC, Irrigation_demand, Min_rel_TWD,         
          Max_rel_TWD, WP_midday, WP_predawn, rel_TWD_log) %>%
   names()
@@ -417,7 +417,7 @@ formatted_df <- correlation_species_df %>%
     correlation = sprintf("%.2f", correlation),
     cor_p = paste0(correlation, " (", p_value, ")")
   ) %>%
-  select(variable, Tree.Species, cor_p)
+  dplyr::select(variable, Tree.Species, cor_p)
 
 correlation_species_df_wide <- formatted_df %>%
   pivot_wider(
@@ -439,8 +439,8 @@ write.csv(correlation_species_df_wide,
 
 corplot_data <- irrig_CWSI %>%
   filter(!is.na(CWSI)) %>%
-  select(CWSI, all_of(vars)) %>%
-  select(-"Irrigation_demand")
+  dplyr::select(CWSI, all_of(vars)) %>%
+  dplyr::select(-"Irrigation_demand")
 
 mat<- cor(corplot_data, use = "pairwise.complete.obs", method = "spearman")
 corrplot(mat, method = "color")
@@ -664,7 +664,7 @@ for(var in vars_to_plot){
 for(tree_spec in tree_species){
   data_sub <- data_B %>%
     filter(Tree.Species == tree_spec) %>%
-    select(Min_rel_TWD, CWSI, SWC, VPD_kPa) %>%  
+    dplyr::select(Min_rel_TWD, CWSI, SWC, VPD_kPa) %>%  
     rename(
       TWDmin = Min_rel_TWD,
       # TWDrel = rel_TWD_log,
@@ -716,7 +716,7 @@ set.seed(123)
 data_B <- irrig_CWSI %>%
   filter(Dendro_info == "DendroTree" & !is.na(CWSI),
          !is.na(Min_rel_TWD), !is.na(SWC), !is.na(VPD_kPa)) %>%
-  select(Tree.Species, CWSI, Min_rel_TWD, SWC, VPD_kPa) %>%
+  dplyr::select(Tree.Species, CWSI, Min_rel_TWD, SWC, VPD_kPa) %>%
   unique() %>%
   mutate(class = factor(ifelse(Min_rel_TWD == 0, "zero", "nonzero"),
                         levels = c("zero", "nonzero")),
@@ -732,7 +732,7 @@ par(mfrow = c(1,1))
 
 # correlations across all tree species
 p <- ggpairs(data_B %>%
-          select(-c("Tree.Species", "class")) %>%
+          dplyr::select(-c("Tree.Species", "class")) %>%
           rename(
             TWDmin = Min_rel_TWD,
             
@@ -1265,8 +1265,8 @@ model_summary_formatted <- model_summary %>%
 oof_results_all_bal_GAM <- oof_results_all_bal %>%
   filter(Model == "GAM") %>%
   mutate(Predictor_Set = dplyr::recode(Predictor_Set, !!!predictor_names)) %>%
-  select(-c(Model, dist0N0, Tree.Species)) %>%
-  select(Balanced_Accuracy, everything()) %>%
+  dplyr::select(-c(Model, dist0N0, Tree.Species)) %>%
+  dplyr::select(Balanced_Accuracy, everything()) %>%
   arrange(desc(Balanced_Accuracy)) %>%
   mutate(
     Balanced_Accuracy = round(Balanced_Accuracy, 4),

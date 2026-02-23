@@ -10,7 +10,7 @@
 #   distance tosolar noon 
 
 
-library(dplyr)
+
 library(readxl)
 library(stringr)
 library(readr)
@@ -21,14 +21,15 @@ library(lubridate)
 library(scales)
 library(suncalc)
 library(ppcor)
+library(dplyr)
 
 
-segment_info <- read_csv("D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/TreeSpecies_Dates_TreeIDs.csv")
+segment_info <- read_csv("./data/thermal/TreeSpecies_Dates_TreeIDs.csv")
 segment_info$Date <- as.Date(as.character(segment_info$Date), format = "%Y%m%d")
 segment_info <- segment_info %>%
   mutate(Tree.ID = str_extract(Tree_ID, "[A-Z][0-9]+_[DW]"))
 
-temp_stats_df <- read_csv("C:/Users/User/Documents/Bewaesserung_Forstkulturen/GH/GH_Analysis/Thermal_Image_Processing/data/results/percentile_and_allpixels_stats.csv")
+temp_stats_df <- read_csv("./data/thermal/results/percentile_and_allpixels_stats.csv")
 
 merged_stats <- left_join(temp_stats_df[, -1], segment_info[, -c(9, 11)],
                           by = c("Tree.ID", "Date"))
@@ -47,7 +48,7 @@ complete_per_position <- merged_stats %>%
 complete_with_action <- complete_per_position %>%
   left_join(
     merged_stats %>%
-      select(Date, Tree.ID, Action) %>%
+      dplyr::select(Date, Tree.ID, Action) %>%
       distinct(),
     by = c("Date", "Tree.ID")
   )
@@ -63,7 +64,7 @@ preferred_position <- complete_with_action %>%
     )
   ) %>%
   filter(keep) %>%
-  select(Date, Tree.ID, Position) %>%
+  dplyr::select(Date, Tree.ID, Position) %>%
   ungroup()
 
 cleaned_df <- merged_stats %>%
@@ -106,7 +107,7 @@ CWSI_df <- cleaned_df %>%
       NA_real_
     )
   ) %>%
-  select(
+  dplyr::select(
     Date,
     RangeType,  # <- keep rangetype
     Position = Position.Tree,
@@ -133,7 +134,7 @@ CWSI_df <- left_join(CWSI_df, cleaned_df[, c(1, 3, 4, 7, 16)],
   mutate(DateTime_POSIX = as.POSIXct(DateTime, format = "%Y-%m-%d %H-%M-%S",
                                      tz = "Europe/Berlin"),
          DateTime_rounded = round_date(DateTime_POSIX, unit = "10 minutes")) %>%
-  select(-DateTime_POSIX) %>%
+  dplyr::select(-DateTime_POSIX) %>%
   mutate(
     Treatment = case_when(
       Treatment == "W" ~ "Watered",
@@ -171,14 +172,14 @@ climate <- climate %>%
     VPD_adj_dailymin_kPa = min(VPD_kPa, na.rm = TRUE)
   ) %>%
   ungroup() %>%
-  select(-Date)
+  dplyr::select(-Date)
 
 # read in irrigation demand, twd, environmental data
-irrig <- read_csv("./data/Irrigation_thres_GH_2023.csv",
+irrig <- read_csv("./data/processed/Irrigation_thres_GH_2023.csv",
                   col_select = -c(1, 6, 7, 8))
 
 # read in min. and max. TWD and WP data (dendrometer trees)
-TWD_WP <- read_csv("./data/TWD_WP_combined.csv",
+TWD_WP <- read_csv("./data/processed/TWD_WP_combined.csv",
                    col_select = -1)
 
 # read in WP measurements of all trees 
@@ -192,7 +193,7 @@ wp <- pivot_wider(wp[, c(1, 2, 5, 22)], names_from = pd.md,
                   names_prefix = "WP_", values_from = WP_average..MPa.)
 
 # read in TWD from all dendrometers in 10 minute resolution
-TWD_10 <- read_csv("./data/ZG_phase_rel_logTWD.csv",
+TWD_10 <- read_csv("./data/processed/ZG_phase_rel_logTWD.csv",
                    col_select = -1)
 TWD_10$TIME <- sub(" UTC$", " CEST", TWD_10$TIME)
 # fill in "00:00:00" for the midnight hours, since they are missing
@@ -238,7 +239,7 @@ irrig_CWSI <- left_join(irrig_CWSI, climate,
                         by = c("DateTime_rounded" = "DateTime"))
 
 irrig_CWSI <- irrig_CWSI %>%
-  select(-c(Tree_ID, DateTime, min_rel_TWD, FirstDayAfterLastGRO, 
+  dplyr::select(-c(Tree_ID, DateTime, min_rel_TWD, FirstDayAfterLastGRO, 
             Percentage_color, Phases, ThresholdDate, Tree.ID_num, 
             Tree.ID_num_cat)) %>%
   mutate(Dendro_info = ifelse(grepl("DendroTree", Dendro_info), "DendroTree",
@@ -350,7 +351,7 @@ CWSI_TWD_timecompare <- left_join(TWD_10_min_max_df,
                                                           "NA", CWSI)) %>%
                                              mutate(CWSI = as.numeric(CWSI)), 
                                   by = c("Tree.ID", "Date")) %>%
-  select(-c("RangeType", "CWSI")) 
+  dplyr::select(-c("RangeType", "CWSI")) 
 
 colnames(CWSI_TWD_timecompare)[9] <- "CWSI_acq_time"
 
@@ -435,7 +436,7 @@ vpd_per_day <- irrig_CWSI %>%
   )
 
 irrig_CWSI <- irrig_CWSI %>%
-  select(-VPD_adj_dailyavg_kPa, -VPD_adj_dailymax_kPa, -VPD_adj_dailymin_kPa) %>%
+  dplyr::select(-VPD_adj_dailyavg_kPa, -VPD_adj_dailymax_kPa, -VPD_adj_dailymin_kPa) %>%
   left_join(vpd_per_day, by = "Date")
 
 irrig_CWSI_allranges <- irrig_CWSI %>%
@@ -468,15 +469,24 @@ ggplot(irrig_CWSI_allranges,
 
 # Calculate differences between CWSI after percentile clipping and CWSI 
 # using all values in long format
+
 cwsi_diffs_long <- irrig_CWSI_allranges %>%
-  select(Date, Tree.Species, Treatment, Tree.ID, RangeType, CWSI) %>%
-  pivot_wider(names_from = RangeType, values_from = CWSI) %>%
+  dplyr::select(Date, Tree.Species, Treatment, Tree.ID, RangeType, CWSI) %>%
+
+  pivot_wider(
+    names_from = RangeType,
+    values_from = CWSI,
+    values_fn = mean  
+  ) %>%
+  
   pivot_longer(
-    cols = -c(Date, Tree.ID, Tree.Species, Treatment, All_Pixels),
+    cols = c(Q10_Q90, Q5_Q95, Q1_Q99, Q15_Q85, IQR_based),
     names_to = "RangeType",
     values_to = "CWSI"
   ) %>%
+  
   mutate(diff_to_allpix = CWSI - All_Pixels)
+
 
 # Boxplot for the CWSI differences calculated from different median values 
 # before and after the percentile clipping
@@ -1040,3 +1050,4 @@ cwsi_near_noon <- cwsi_solarnoon %>%
 n_values <- nrow(cwsi_near_noon)
 
 perc_cwsi_near_noon <- n_values/nrow(cwsi_solarnoon)
+

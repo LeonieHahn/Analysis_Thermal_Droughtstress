@@ -1,3 +1,216 @@
+# Function for splitting dataframe into several dataframes, so one dataframe
+# per tree species and treatment is created
+tst_df_creation <- function(df_to_split, df_name, treespecies, treatment) {
+  selected_columns <- grep(paste0("^", treespecies, ".*", treatment, 
+                                  "(_original)?$"), colnames(df_to_split), 
+                           value = TRUE)
+  dataframe_name <- df_to_split[, c("TIME", selected_columns)]
+}
+
+# Function for creating a dataframe per tree species and treatment with 
+# dendrometers that have missing data
+select_dendro_with_NAs <- function(x) {
+  misdat_names_with_suffix <- paste0(dendro_misdat_names, "_original")
+  combined_misdat_names <- c(dendro_misdat_names, misdat_names_with_suffix)
+  
+  if (any(combined_misdat_names %in% colnames(as.data.frame(x)))) {
+    x_cleaned <- subset(as.data.frame(x), 
+                        select = colnames(as.data.frame(x)) %in% combined_misdat_names)
+    return(x_cleaned)
+  }
+}
+
+# Function for creating a dataframe per tree species and treatment without 
+# dendrometers that have missing data
+remove_dendro_with_NAs <- function(x, mis_dendro_names) {
+  mis_dendro_names_with_suffix <- paste0(mis_dendro_names, "_original")
+  combined_mis_dendro_names <- c(mis_dendro_names, mis_dendro_names_with_suffix)
+  
+  if (any(combined_mis_dendro_names %in% colnames(as.data.frame(x)))) {
+    x_cleaned <- subset(as.data.frame(x), 
+                        select = !colnames(as.data.frame(x)) %in% combined_mis_dendro_names)
+    return(x_cleaned)
+  } else {
+    return(x)
+  }
+}
+# Function for interpolating missing data with network.interpolation and 
+# correcting jumps with dendRoAnalyst (Aryal et al. 2020), returning a dataframe
+# with the interpolated and jump-corrected values
+process_dendrometer <- function(df1, df2) {
+  dendro_network <- network.interpolation(df1, df2, niMethod = "proportional")
+  dendro_network_j <- jump.locator(dendro_network, v=30)
+  return(cbind(df1, dendro_network, dendro_network_j))
+}
+
+# Function for combining the dendRoAnalyst-processed dendrometerdata into one 
+# dataframe
+create_process_dendro_df <- function(df_column, df){
+  dendro_processed <- process_dendrometer(df_column, df)
+  col_amount <- ncol(as.data.frame(df_column))
+  # remove 3times occurring ts -column
+  combined_dendro <- dendro_processed[,c(1:col_amount,
+                                         (col_amount+2):(2*col_amount),
+                                         (2*col_amount+2):(2*col_amount+2+
+                                                             col_amount-2))]
+  colnames(combined_dendro) <- c(colnames(combined_dendro[,1:col_amount]),
+                                 paste0(colnames(combined_dendro
+                                                 [,2:col_amount]), "_int"),
+                                 paste0(colnames(combined_dendro
+                                                 [,2:col_amount]), "_jcor"))
+  return(combined_dendro)
+  
+}
+
+# Function for correcting one dendrometer timeseries with missing data  
+process_single_dendro <- function(df_NA_dendro, corrected_dendro) {
+  if (!is.null(df_NA_dendro)) {
+    
+    # select corrected dendrometer for network interpolation
+    df_corrected <- corrected_dendro
+    colnames(df_corrected)[1] <- "ts"
+    df_na_dendro <- cbind(df_corrected$ts, df_NA_dendro)
+    colnames(df_na_dendro)[1] <- "ts"
+    df_na_dendro_corrected <- create_process_dendro_df(df_na_dendro, df_corrected)
+    
+    # change column names
+    if (ncol(df_na_dendro_corrected) == 4) {
+      colnames(df_na_dendro_corrected) <- c("TIME",
+                                            colnames(df_na_dendro_corrected)[2],
+                                            paste0(colnames(
+                                              df_na_dendro_corrected)[2], 
+                                              colnames(df_na_dendro_corrected)[3]),
+                                            paste0(colnames(
+                                              df_na_dendro_corrected)[2], 
+                                              colnames(df_na_dendro_corrected)[4]))
+    } else {
+      colnames(df_na_dendro_corrected)[1] <- "TIME"
+    }
+    
+    corrected_dendro <- left_join(corrected_dendro, 
+                                  df_na_dendro_corrected, by = "TIME")
+    
+  }
+  # Return dataframe with corrected dendrometer
+  return(corrected_dendro)
+}
+
+# Function for plotting treenetproc corrected, dendRoAnalyst-interpolated and 
+# -jump-corrected dendrometer data in comparison per tree.id
+plot_dendrometer_comparison <- function(data, tree_col, png_path) {
+  # check if a column with dendRoAnalyst-jump-corrected data exists
+  jcor_column_exists <- paste0(tree_col, "_jcor") %in% colnames(data)
+  
+  # create base plot with treenetproc corrected data
+  p <- ggplot(data) +
+    geom_line(aes(x = Datetime, y = .data[[tree_col]], color = "orig"), 
+              linewidth = 0.5) +
+    labs(
+      title = paste0(tree_col,
+                     " Comparison of original
+       dendRoAnalyst (network interpolated & jump 30 corrected) processed TSD"),
+      x = "Date",
+      y = "Tree Stem Diameter [µm]",
+      color = ""
+    ) +
+    scale_color_manual(
+      values = c("orig" = "black", 
+                 "DA" = "blue"),
+      labels = c("orig" = "original", 
+                 "DA" = "dendRoAnalyst corrected")
+    ) +
+    theme_bw() +
+    theme(legend.position = "bottom",
+          plot.title = element_text(size = 14, face = "bold", hjust = 0.5),  
+          axis.title = element_text(size = 10),  
+          axis.text = element_text(size = 7),
+          legend.text = element_text(size = 10))
+  
+  # add dendRoAnalyst-interpolated and -jump-corrected data if it exists
+  if (jcor_column_exists) {
+    p <- p +
+      geom_line(aes(x = Datetime, y = .data[[paste0(tree_col, "_jcor")]], 
+                    color = "DA"), 
+                linewidth = 0.5) +
+      geom_line(aes(x = Datetime, y = .data[[tree_col]], color = "orig"), 
+                linewidth = 0.5)
+    
+  }
+  ggsave(plot = p, path = png_path, 
+         filename = paste0(tree_col, "_TSD_orig_DA_comparison.png"),
+         width = 2560, height = 1489, units = "px")
+}
+
+# function for calculating measures like TWD and GRO from dendRoAnalyst and
+# create plot with TWD and GRO per Tree.ID
+calc_plot_DA <- function (i, df, year, plotpath){
+  Tree.ID <- colnames(df)[i]
+  Treatment <- gsub(".*([DW]).*", "\\1", Tree.ID)
+  Tree.Species <- substr(Tree.ID, 1, 1)
+  TWD <- phase.zg(df, TreeNum = i-1)
+  ZG_cycle <- TWD[[1]]
+  ZG_cycle$Tree.ID <- Tree.ID
+  ZG_cycle$Treatment <- Treatment
+  ZG_cycle$Tree.Species <- Tree.Species
+  ZG_phase <- TWD[[2]]
+  ZG_phase$Tree.ID <- Tree.ID
+  ZG_phase$Treatment <- Treatment
+  ZG_phase$Tree.Species <- Tree.Species
+  ZG_cycle_DF <<- rbind(ZG_cycle_DF, ZG_cycle)
+  ZG_phase_DF <<- rbind(ZG_phase_DF, ZG_phase)
+  png(paste0(plotpath, Tree.ID, "_TWD.png"), width = 2000, height = 1000)
+  p <- plot_ZG_output(ZG_output=TWD,DOY=c(first_day_of_year, last_day_of_year),
+                      Year=year)
+  print(p)
+  dev.off()
+  daily_info <- daily.data(df, TreeNum = i-1)
+  daily_info$Tree.ID <- Tree.ID
+  daily_info$Treatment <- Treatment
+  daily_info$Tree.Species <- Tree.Species
+  daily_data_DF <<- rbind(daily_data_DF, daily_info)
+}
+
+# Function for replacing Inf values with NA
+replace_inf <- function(column) {
+  column[is.infinite(column)] <- NA
+  return(column)
+}
+
+
+# Function for cacting the max. log(TWD) per tree species and creating a 
+# dataframe with the results where also the Tree.ID and date is listed on which
+# it occured
+get_max_TWD_log_info <- function(species) {
+  max_row <- ZG_phase_DF %>%
+    filter(Tree.Species == species) %>%
+    filter(TWD_log == max(TWD_log, na.rm = TRUE)) %>%
+    slice(1)  
+  species2 <- ifelse(max_row$Tree.Species == "Fagus sylvatica", "B",
+                     ifelse(max_row$Tree.Species == "Quercus robur", "E", "D"))
+  data.frame(
+    variable = paste0("max_TWD_", species2, "_log"),
+    max_TWD_value = max_row$TWD_log,
+    max_TWD_date = max_row$TIME,
+    max_TWD_Tree.ID = max_row$Tree.ID
+  )
+}
+
+# Function for normalizing log(TWD) to max log(TWD) per tree species
+normalize_TWD <- function(species) {
+  species2 <- ifelse(species == "Fagus sylvatica", "B",
+                            ifelse(species == "Quercus robur", "E", "D"))
+  
+  # extract max log(TWD) according to tree species
+  max_value_spec <- max_data_log %>%
+    filter(str_detect(variable, paste0("_", species2, "_"))) %>%
+    pull(max_TWD_value)
+  
+  # Normalize log(TWD) to max. log(TWD) per tree species
+  ZG_phase_DF %>%
+    filter(Tree.Species == species) %>%
+    mutate(rel_TWD_log = TWD_log / max_value_spec)
+}
+
 # function for checking the manually created points in the shapefiles used 
 # for the tree segmentation and the corresponding thermal and rgb images
 point_check <- function(x){
