@@ -959,13 +959,22 @@ cwsi_solarnoon <- left_join(irrig_CWSI, imagetimes_solarnoon,
 
 # calculate R² for the relationship CWSI and TimeDiff_SolarNoon_min
 r2_df <- cwsi_solarnoon %>%
- # group_by(Tree.Species) %>%
   summarise(
-    R2 = summary(lm(CWSI ~ TimeDiff_SolarNoon_h))$r.squared,
-    .groups = "drop"
+    model = list(lm(CWSI ~ TimeDiff_SolarNoon_h, 
+                    data = pick(everything())))
   ) %>%
-  mutate(R2_label = paste0("R² = ", round(R2, 2)))
-
+  mutate(
+    R2 = summary(model[[1]])$r.squared,
+    p_value = summary(model[[1]])$coefficients[2, 4],
+    signif_code = case_when(
+      p_value < 0.001 ~ "***",
+      p_value < 0.01  ~ "**",
+      p_value < 0.05  ~ "*",
+      TRUE ~ ""
+    ),
+    R2_label = paste0("R² = ", round(R2, 2), signif_code)
+  ) %>%
+  select(R2, p_value, R2_label)
 
 # Calculate partial correlation between CWSI and TimeDiff_SolarNoon_min
 # without the effect of VPD_kPa
