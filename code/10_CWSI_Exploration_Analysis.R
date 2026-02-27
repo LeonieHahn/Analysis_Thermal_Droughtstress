@@ -432,7 +432,6 @@ irrig_CWSI_allranges <- irrig_CWSI %>%
   rename(Mean_VPD_kPa = VPD_adj_dailyavg_kPa,
          Min_VPD_kPa = VPD_adj_dailymin_kPa,
          Max_VPD_kPa = VPD_adj_dailymax_kPa,
-        # Irrigation_demand = Percentage_w_cros,
          SWC = VWC_mean)
 
 write.csv(irrig_CWSI_allranges, "./data/results/Irrig_CWSI_allranges.csv", 

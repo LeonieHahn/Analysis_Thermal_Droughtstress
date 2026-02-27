@@ -49,7 +49,7 @@ all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min.csv")
 # all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min_VPD_uncor.csv")
 # all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min_VPD_median_cor.csv")
 
-# create overview plot (S 2) with CWSI, ecophysiological, and environmental
+# create overview plot with CWSI, ecophysiological, and environmental
 # variables during the course of the experiment per treatment and tree species
 
 # calculate daily values
@@ -552,7 +552,7 @@ ggsave("./graphics/results/Corr_Plot_CWSI_all_trees_BED.png",
        width = 14, height = 6, dpi = 300)
 
 # Plot correlations with CWSI divided into ecophysiological and 
-# environmental variables (Figure 2)
+# environmental variables (Figure 3)
 ggplot(
   cwsi_corr_df %>%
     mutate(
@@ -772,17 +772,6 @@ dir.create("./graphics/Confusion_Matrix/plots_cm_bal",
            showWarnings = FALSE, recursive = TRUE)
 dir.create("./graphics/Confusion_Matrix/plots_cm_mean_bal", 
            showWarnings = FALSE, recursive = TRUE)
-
-# dir.create("./graphics/Confusion_Matrix_VPD_uncor/plots_cm_bal", 
-#            showWarnings = FALSE, recursive = TRUE)
-# dir.create("./graphics/Confusion_Matrix_VPD_uncor/plots_cm_mean_bal", 
-#            showWarnings = FALSE, recursive = TRUE)
-# 
-# dir.create("./graphics/Confusion_Matrix_VPD_median_cor/plots_cm_bal", 
-#            showWarnings = FALSE, recursive = TRUE)
-# dir.create("./graphics/Confusion_Matrix_VPD_median_cor/plots_cm_mean_bal", 
-#            showWarnings = FALSE, recursive = TRUE)
-
 
 # initialise results lists and dataframes
 cv_results_all_bal <- list()
@@ -1424,7 +1413,7 @@ thresholds_df <- thresholds_df %>%
     y_pos = seq(0.15, 0.35, length.out = n())  # define distance between texts
   )
 
-# Threshold plot (Figure 4)
+# Threshold plot (Figure 5)
 gg_combined <- ggplot(all_newdat, 
                       aes(x = CWSI, y = Probability, color = Tree.Species)) +
   geom_line(size = 1.2) +
@@ -1652,7 +1641,7 @@ contour_lines <- contour_df %>%
     )
   )
 
-# Create plot (Figure 5) with different linetypes and sizes per CWSI value
+# Create plot (Figure 6) with different linetypes and sizes per CWSI value
 ggplot(contour_lines, aes(x = VPD_kPa, y = SWC, color = Tree.Species)) +
   geom_line(aes(linetype = CWSI_label, size = CWSI_label)) +
   scale_color_manual(values = species_colors) +
@@ -1704,7 +1693,7 @@ grid_df$Probability <- predict(gam_list[[2]], newdata = grid_df,
                                type = "response")
 
 
-# Plot S 25: P= 0.5-Thresholds + confidence band
+# Plot S 26: P= 0.5-Thresholds + confidence band
 ggplot(grid_df, aes(x = CWSI, y = SWC)) +
   # confidence band as shaded area between P=0.475 and Prob=0.525 
   # -> 5 % Band
@@ -1785,7 +1774,7 @@ write.csv(CWSI_summary_diff,
 # define colors
 cols <- c("   0" = "blue", "> 0" = "red")
 
-# Boxplot with Wilcoxon-Test ( **** p < 0.0001, ** < 0.01) (Figure 3) to
+# Boxplot with Wilcoxon-Test ( **** p < 0.0001, ** < 0.01) (Figure 4) to
 # show significant CWSI differences between classes
 p <- ggplot(data_B %>%
               mutate(class = dplyr::recode(class, "nonzero" = "> 0"),
