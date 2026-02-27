@@ -1,4 +1,0 @@
-GH_3_Apply_IrrigationIndicators 
-
-
-code, der zum weiterprocessieren in Publikation 1 für die GH Dendrometer daten verwendet wurde

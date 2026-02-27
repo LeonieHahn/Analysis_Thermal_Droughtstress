@@ -148,32 +148,16 @@ calc_plot_DA <- function (i, df, year, plotpath){
   Treatment <- gsub(".*([DW]).*", "\\1", Tree.ID)
   Tree.Species <- substr(Tree.ID, 1, 1)
   TWD <- phase.zg(df, TreeNum = i-1)
-  ZG_cycle <- TWD[[1]]
-  ZG_cycle$Tree.ID <- Tree.ID
-  ZG_cycle$Treatment <- Treatment
-  ZG_cycle$Tree.Species <- Tree.Species
   ZG_phase <- TWD[[2]]
   ZG_phase$Tree.ID <- Tree.ID
   ZG_phase$Treatment <- Treatment
   ZG_phase$Tree.Species <- Tree.Species
-  ZG_cycle_DF <<- rbind(ZG_cycle_DF, ZG_cycle)
   ZG_phase_DF <<- rbind(ZG_phase_DF, ZG_phase)
   png(paste0(plotpath, Tree.ID, "_TWD.png"), width = 2000, height = 1000)
   p <- plot_ZG_output(ZG_output=TWD,DOY=c(first_day_of_year, last_day_of_year),
                       Year=year)
   print(p)
   dev.off()
-  daily_info <- daily.data(df, TreeNum = i-1)
-  daily_info$Tree.ID <- Tree.ID
-  daily_info$Treatment <- Treatment
-  daily_info$Tree.Species <- Tree.Species
-  daily_data_DF <<- rbind(daily_data_DF, daily_info)
-}
-
-# Function for replacing Inf values with NA
-replace_inf <- function(column) {
-  column[is.infinite(column)] <- NA
-  return(column)
 }
 
 
