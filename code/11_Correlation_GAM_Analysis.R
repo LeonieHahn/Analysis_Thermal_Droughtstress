@@ -53,7 +53,6 @@ all_data10 <- read_csv("./data/results/Env_Eco_CWSI_combined_10min.csv")
 # variables during the course of the experiment per treatment and tree species
 
 # calculate daily values
-
 all_data_stats <- all_data10 %>%
   group_by(Date, Treatment, Tree.Species) %>%
   summarise(mean_Min_rel_TWD  = mean(Min_rel_TWD, na.rm = TRUE),
@@ -82,7 +81,6 @@ all_data_stats <- all_data10 %>%
             min_VPD_kPa = min(VPD_kPa, na.rm = TRUE),
             max_VPD_kPa = max(VPD_kPa, na.rm = TRUE)
             )
-
 
 all_data_filled <- all_data_stats %>%
   group_by(Tree.Species, Treatment) %>%
