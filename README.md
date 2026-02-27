@@ -27,6 +27,7 @@ To reproduce the analysis with the same R packages, run:
 
 ```r
 renv::restore()
+```
 
 ### Citation
 This repository is archived on Zenodo
