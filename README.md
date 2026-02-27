@@ -22,5 +22,11 @@ conda activate Analysis_Thermal_Droughtstress
 ##### R scripts
 All remaining scripts are written in **R**.
 
+This project uses a **renv** environment to manage package versions.  
+To reproduce the analysis with the same R packages, run:
+
+```r
+renv::restore()
+
 ### Citation
 This repository is archived on Zenodo
