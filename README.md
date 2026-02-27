@@ -9,8 +9,8 @@ Please run the scripts **in the order indicated by their numbering**.
 
 The following notebooks must be executed in **Python**:
 
-- `01_Image_Registration.ipynb`
-- `04_Segment_Trees_Negative_Samples_SAM2.ipynb`
+- `03_Image_Registration.ipynb`
+- `05_Segment_Trees_Negative_Samples_SAM2.ipynb`
 
 Use the provided conda environment:
 
