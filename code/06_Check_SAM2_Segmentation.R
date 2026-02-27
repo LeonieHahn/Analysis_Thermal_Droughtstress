@@ -7,7 +7,7 @@ library(gridExtra)
 
 source("./Code/Functions.R")
 
-base_path <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/segmentation_results"
+base_path <- "./data/images/segmentation_results"
 all_folders <- list.files(base_path, full.names = TRUE)
 
 all_images <- data.frame(folder = character(),

@@ -20,14 +20,14 @@ registerDoSNOW(cl)
 
 
 # Base directories
-base_rgb_path <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/segmentation_results"
-base_thermal_path <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal"
-output_base <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel"
+base_rgb_path <- "./data/images/segmentation_results"
+base_thermal_path <- "./data/images/"
+output_base <- "./data/images/Cropped_Thermals_1eroded_pixel"
 
-out_dir_allpix <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_all_pixels"
+out_dir_allpix <- "./data/images/Cropped_Thermals_all_pixels"
   
 # Load table with information which SAM 2 mask should be used
-segment_info <- read_csv("D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/TreeSpecies_Dates_TreeIDs.csv")
+segment_info <- read_csv("./data/Thermal/TreeSpecies_Dates_TreeIDs.csv")
 segment_info$Date <- as.Date(as.character(segment_info$Date), format = "%Y%m%d")
 
 # Function for loading the raster with the temperature information, 

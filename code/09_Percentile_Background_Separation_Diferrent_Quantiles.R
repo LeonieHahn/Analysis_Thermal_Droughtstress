@@ -19,9 +19,9 @@ library(stringr)
 
 source("./Code/Functions.R")
 
-input_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel"
+input_root <- "./data/images/Cropped_Thermals_1eroded_pixel"
 
-output_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
+output_root <- "./data/images/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
 
 cluster_means_df <- data.frame(
   file = character(),
@@ -131,8 +131,8 @@ cluster_means_stats <- cluster_means_df %>%
 
 
 # Input and output folders
-input_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
-output_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_percentile_clipped"
+input_root <- "./data/images/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
+output_root <- "./data/images/Cropped_Thermals_percentile_clipped"
 
 # Define all quantile ranges that should be tested
 quantile_ranges <- list(
@@ -303,7 +303,7 @@ pixel_amount_used <- percentile_means_df %>%
 # Add median values of the thermal images including the masked versions without 
 # postprocessing
 
-allpixels_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_all_pixels"
+allpixels_root <- "./data/images/Cropped_Thermals_all_pixels"
 
 # use all subfolders as earlier
 subdirs_allpixels <- dir_ls(allpixels_root, type = "directory", recurse = FALSE)
@@ -409,10 +409,10 @@ write.csv(combined_df,
 
 
 # view results and compare with original cropped thermal image
-input_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_all_pixels"
-output_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_percentile_clipped"
+input_root <- "./data/images/Cropped_Thermals_all_pixels"
+output_root <- "./data/images/Cropped_Thermals_percentile_clipped"
 
-target_root <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans_percentile1090_clipped"
+target_root <- "./data/images/Cropped_Thermals_1eroded_pixel_Refs_kmeans_percentile1090_clipped"
 
 # Copy all Q10_Q90 folders in new folder for comparison
 all_subfolders <- list.dirs(output_root, recursive = FALSE, full.names = TRUE)
@@ -441,9 +441,10 @@ cat("Finished copying all Q10_Q90 folders.\n")
 input_files <- dir(input_root, pattern = "\\.tif$", recursive = TRUE, 
                    full.names = TRUE)
 
-input_root_kmeans <- "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
+input_root_kmeans <- "./data/images/Cropped_Thermals_1eroded_pixel_Refs_kmeans"
 
-input_files_kmeans <- dir(input_root, pattern = "\\.tif$", recursive = TRUE, full.names = TRUE)
+input_files_kmeans <- dir(input_root, pattern = "\\.tif$", 
+                          recursive = TRUE, full.names = TRUE)
 
 
 

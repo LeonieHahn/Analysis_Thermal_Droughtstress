@@ -13,7 +13,7 @@ library(stringr)
 
 source("./Code/Functions.R")
 
-path = "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/"
+path = "./data/images/"
 
 image_folderlist <- list.dirs(path, full.names = TRUE, recursive = FALSE)
 image_folderlist <- image_folderlist[grep("Thermal_sorted", image_folderlist)]

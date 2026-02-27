@@ -7,7 +7,7 @@ library(viridis)
 
 source("./Code/Functions.R")
 
-path = "D:/Bewaesserung_Forstkulturen/Daten/Gewaechshaus/Gewaechshaus_Trockenstress2023/Thermal/GH_Analyse_Thermal/"
+path = "./data/images/"
 
 # select shapefile-folder and corresponding thermal- and rgb-image-folder
 all_dirs <- list.dirs(path, full.names = TRUE, recursive = FALSE)
