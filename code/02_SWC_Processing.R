@@ -1,3 +1,8 @@
+# Inspect volumetric soil water content measurements, remove measurement errors,
+# interpolate missing data linearly, calculate statistisc per tree species
+# and treatment
+
+
 library(ggplot2)
 library(dplyr)
 library(tidyr)
