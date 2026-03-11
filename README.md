@@ -30,4 +30,4 @@ renv::restore()
 ```
 
 ### Citation
-This repository is archived on Zenodo
+This repository is archived on Zenodo [![DOI](https://zenodo.org/badge/1130251495.svg)](https://doi.org/10.5281/zenodo.18957879)
